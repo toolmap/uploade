@@ -1,16 +1,99 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>GitHub Photo Upload</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Public Photo Upload</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border: 1px solid #ccc;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-control {
+            width: 100%;
+            height: 40px;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+        }
+        .btn {
+            background-color: #4CAF50;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background-color: #3e8e41;
+        }
+    </style>
 </head>
 <body>
-  <h1>GitHub Photo Upload</h1>
-  <form id="upload-form">
-    <input type="file" id="photo" name="photo">
-    <button id="upload-btn">Upload Photo</button>
-  </form>
-  <div id="photo-gallery"></div>
+    <div class="container">
+        <h2>Public Photo Upload</h2>
+        <form id="upload-form">
+            <div class="form-group">
+                <input type="file" id="photo" class="form-control">
+            </div>
+            <div class="form-group">
+                <input type="text" id="caption" class="form-control" placeholder="Caption (optional)">
+            </div>
+            <button class="btn" id="upload-btn">Upload Photo</button>
+        </form>
+        <div id="uploaded-photos"></div>
+    </div>
 
-  <script src="script.js"></script>
+    <script>
+        const githubApiKey = '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';
+        const githubUsername = 'toolmap';
+        const githubRepositoryName = 'uploade';
+
+        const uploadForm = document.getElementById('upload-form');
+        const uploadBtn = document.getElementById('upload-btn');
+        const uploadedPhotosDiv = document.getElementById('uploaded-photos');
+
+        uploadBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const photoInput = document.getElementById('photo');
+            const captionInput = document.getElementById('caption');
+            const photoFile = photoInput.files[0];
+            const caption = captionInput.value.trim();
+
+            const formData = new FormData();
+            formData.append('file', photoFile);
+            formData.append('caption', caption);
+
+            fetch(`https://api.github.com/repos/${githubUsername}/${githubRepositoryName}/contents/photos/${photoFile.name}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${githubApiKey}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: `Uploaded photo: ${photoFile.name}`,
+                    content: btoa(photoFile),
+                    branch: 'main'
+                })
+            })
+            .then((response) => response.json())
+            .then((data) => {
+                const photoUrl = `https://raw.githubusercontent.com/${githubUsername}/${githubRepositoryName}/main/photos/${photoFile.name}`;
+                const photoHtml = `<img src="${photoUrl}" alt="${caption}">`;
+                uploadedPhotosDiv.innerHTML += photoHtml;
+            })
+            .catch((error) => console.error(error));
+        });
+    </script>
 </body>
 </html>
